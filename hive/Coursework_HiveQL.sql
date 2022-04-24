@@ -16,8 +16,6 @@ SET hivevar:year='2021';
 -- MAGIC 
 -- MAGIC fileroot = "clinicaltrial_2021_csv"
 -- MAGIC renamed_fileroot = "clinicaltrial_2021.csv"
--- MAGIC mesh_csv = "/FileStore/tables/mesh.csv"
--- MAGIC pharma_csv = "/FileStore/tables/pharma.csv"
 -- MAGIC 
 -- MAGIC try:
 -- MAGIC     dbutils.fs.ls("/FileStore/tables/" + renamed_fileroot)
@@ -41,11 +39,6 @@ SET hivevar:year='2021';
 
 -- COMMAND ----------
 
--- MAGIC %python
--- MAGIC dbutils.fs.ls("/FileStore/tables/")
-
--- COMMAND ----------
-
 -- MAGIC %md
 -- MAGIC <b>CREATE TABLES AND LOAD DATA INTO EACH ONE<b>
 
@@ -65,7 +58,7 @@ CREATE TABLE IF NOT EXISTS clinicaltrial_2021_table(
   Interventions STRING)
 ROW FORMAT DELIMITED
 FIELDS TERMINATED BY '|'
-LOCATION '/FileStore/clinicaltrial';
+LOCATION '/FileStore/clinicaltrials';
 
 -- COMMAND ----------
 
@@ -121,7 +114,7 @@ FROM pharma_table;
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC <b>PREPARE THE DATA<b>
+-- MAGIC <b>PREPARING THE DATA<b>
 
 -- COMMAND ----------
 
@@ -129,14 +122,6 @@ FROM pharma_table;
 -- CHANGE CLINICALTRIAL TABLE NAME HERE!!
 CREATE TEMPORARY VIEW clinicaltrial_2021_view
 AS SELECT * FROM clinicaltrial_2021_table WHERE Id!='Id';
-
--- COMMAND ----------
-
-DROP VIEW clinicaltrial_view
-
--- COMMAND ----------
-
-SELECT * FROM clinicaltrial_2021_view
 
 -- COMMAND ----------
 
@@ -174,7 +159,7 @@ GROUP BY Conditions ORDER BY Counts DESC LIMIT 5;
 
 -- COMMAND ----------
 
--- Create a temporary View from exploded clinical trial data
+-- CREATE A TEMPORARY VIEW FROM THE EXPLODED CLINICALTRIAL DATA
 CREATE TEMPORARY VIEW explodedclinical_view
 AS SELECT *,explode(split(Conditions, ',')) AS ExplodedConditions FROM clinicaltrial_2021_view WHERE Conditions!='';
 
@@ -214,7 +199,7 @@ ORDER BY (unix_timestamp(Completion,'MMM'),'MM');
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC <b>VISUALISE RESULTS<b>
+-- MAGIC <b>VISUALISING THE RESULT<b>
 
 -- COMMAND ----------
 
