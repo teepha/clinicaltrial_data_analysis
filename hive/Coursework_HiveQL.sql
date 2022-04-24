@@ -53,7 +53,7 @@ SET hivevar:year='2021';
 
 -- CREATE CLINICALTRIAL TABLE
 -- CHANGE TABLE NAME TO INCLLUDE YEAR OF CLINICALTRIAL
-CREATE TABLE IF NOT EXISTS clinicaltrial_20_21_table(
+CREATE TABLE IF NOT EXISTS clinicaltrial_2021_table(
   Id STRING,
   Sponsor STRING,
   Status STRING,
@@ -70,7 +70,7 @@ LOCATION '/FileStore/clinicaltrial';
 -- COMMAND ----------
 
 -- CHANGE CLINICALTRIAL FILE NAME AND TABLE NAME HERE!!
-LOAD DATA INPATH '/FileStore/tables/clinicaltrial_2021.csv' INTO TABLE clinicaltrial_20_21_table;
+LOAD DATA INPATH '/FileStore/tables/clinicaltrial_2021.csv' INTO TABLE clinicaltrial_2021_table;
 
 -- COMMAND ----------
 
@@ -127,8 +127,8 @@ FROM pharma_table;
 
 -- CREATE A TEMPORARY VIEW FROM CLINICALTRIAL TABLE
 -- CHANGE CLINICALTRIAL TABLE NAME HERE!!
-CREATE TEMPORARY VIEW clinicaltrial_20_21_view
-AS SELECT * FROM clinicaltrial_20_21_table WHERE Id!='Id';
+CREATE TEMPORARY VIEW clinicaltrial_2021_view
+AS SELECT * FROM clinicaltrial_2021_table WHERE Id!='Id';
 
 -- COMMAND ----------
 
@@ -136,7 +136,7 @@ DROP VIEW clinicaltrial_view
 
 -- COMMAND ----------
 
-SELECT * FROM clinicaltrial_20_21_view
+SELECT * FROM clinicaltrial_2021_view
 
 -- COMMAND ----------
 
@@ -158,25 +158,25 @@ AS SELECT * FROM pharma_formatted_table WHERE Company!='Company';
 -- COMMAND ----------
 
 -- QUESTION1: The number of studies in the dataset
-SELECT DISTINCT COUNT(*) AS Count FROM clinicaltrial_20_21_view;
+SELECT DISTINCT COUNT(*) AS Count FROM clinicaltrial_2021_view;
 
 -- COMMAND ----------
 
 -- QUESTION2: List all the Type of studies in the dataset along with the frequencies of each type
-SELECT DISTINCT Type,COUNT(*) AS Count FROM clinicaltrial_20_21_view GROUP BY Type ORDER BY Count DESC;
+SELECT DISTINCT Type,COUNT(*) AS Count FROM clinicaltrial_2021_view GROUP BY Type ORDER BY Count DESC;
 
 -- COMMAND ----------
 
 -- QUESTION3: The top 5 Conditions with their frequencies
 SELECT Conditions,COUNT(Conditions) AS Counts
-FROM (SELECT explode(split(Conditions, ',')) AS Conditions FROM clinicaltrial_20_21_view WHERE Conditions!='')
+FROM (SELECT explode(split(Conditions, ',')) AS Conditions FROM clinicaltrial_2021_view WHERE Conditions!='')
 GROUP BY Conditions ORDER BY Counts DESC LIMIT 5;
 
 -- COMMAND ----------
 
 -- Create a temporary View from exploded clinical trial data
 CREATE TEMPORARY VIEW explodedclinical_view
-AS SELECT *,explode(split(Conditions, ',')) AS ExplodedConditions FROM clinicaltrial_20_21_view WHERE Conditions!='';
+AS SELECT *,explode(split(Conditions, ',')) AS ExplodedConditions FROM clinicaltrial_2021_view WHERE Conditions!='';
 
 -- COMMAND ----------
 
@@ -194,7 +194,7 @@ GROUP BY tree ORDER BY counts DESC LIMIT 5;
 -- QUESTION 5: The 10 most common sponsors that are not pharmaceutical companies with the number of clinical trials they have sponsored
 SELECT Sponsor,COUNT(Sponsor) AS counts FROM
 (
-SELECT * FROM clinicaltrial_20_21_view c
+SELECT * FROM clinicaltrial_2021_view c
 LEFT OUTER JOIN pharma_view p
 ON c.Sponsor=p.Parent_Company
 WHERE p.Parent_Company IS NULL AND c.Status <> "Active"
@@ -206,7 +206,7 @@ GROUP BY Sponsor ORDER BY counts DESC LIMIT 10;
 -- QUESTION 6: Number of completed studies each month in a given year
 SELECT SUBSTRING(Completion,1,3) AS Completion,
        COUNT(Completion) AS counts
-FROM clinicaltrial_20_21_view
+FROM clinicaltrial_2021_view
 WHERE Status=="Completed" AND Completion LIKE concat("%",${hivevar:year})
 GROUP BY Completion
 ORDER BY (unix_timestamp(Completion,'MMM'),'MM');
@@ -224,7 +224,7 @@ AS
 
 SELECT SUBSTRING(Completion,1,3) AS Completion,
        COUNT(Completion) AS counts
-FROM clinicaltrial_20_21_view
+FROM clinicaltrial_2021_view
 WHERE Status=="Completed" AND Completion LIKE concat("%",${hivevar:year})
 GROUP BY Completion
 ORDER BY (unix_timestamp(Completion,'MMM'),'MM');
@@ -256,44 +256,6 @@ ORDER BY (unix_timestamp(Completion,'MMM'),'MM');
 -- MAGIC 
 -- MAGIC html = file_html(p, CDN, "plot")
 -- MAGIC displayHTML(html)
-
--- COMMAND ----------
-
-DROP VIEW explodedclinical_view;
-
--- COMMAND ----------
-
-DROP VIEW completedstudies_view;
-
--- COMMAND ----------
-
-DROP VIEW clinicaltrial_20_21_view;
-
-
--- COMMAND ----------
-
-DROP TABLE IF EXISTS clinicaltrial_20_21_table;
-
--- COMMAND ----------
-
-DROP VIEW mesh_view;
-
-
--- COMMAND ----------
-
-DROP TABLE IF EXISTS mesh_table;
-
--- COMMAND ----------
-
-DROP VIEW pharma_view;
-
--- COMMAND ----------
-
-DROP TABLE IF EXISTS pharma_formatted_table;
-
--- COMMAND ----------
-
-DROP TABLE IF EXISTS pharma_table;
 
 -- COMMAND ----------
 
