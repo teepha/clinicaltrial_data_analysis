@@ -4,26 +4,35 @@
 
 # COMMAND ----------
 
-dataset_year = str(2019)
+# MAGIC %md
+# MAGIC CLINICAL TRIAL DATA
 
 # COMMAND ----------
 
-from pyspark.sql.functions import *
+# CLINICAL TRIAL YEAR
+clinicaltrial_year = '2021'
 
 # COMMAND ----------
 
 # DO NOT CHANGE THE CONTENT OF THIS CELL
+import sys
+if not 'dbruntime.dbutils' in sys.modules.keys():
+    import pyspark
+    sc = pyspark.SparkContext()
+
+# COMMAND ----------
+
+# DO NOT CHANGE THE CONTENT OF THIS CELL  
 import os
 import sys
 
-fileroot = "clinicaltrial_" + dataset_year + "_csv"
-renamed_fileroot = "clinicaltrial_" + dataset_year + ".csv"
-mesh_csv = "/FileStore/tables/mesh.csv"
-pharma_csv = "/FileStore/tables/pharma.csv"
+fileroot = "clinicaltrial_" + clinicaltrial_year + "_csv"
+clinicaltrial_csv = "/FileStore/tables/clinicaltrial_" + clinicaltrial_year + ".csv"
 
-# if 'dbruntime.dbutils' in sys.modules.keys():
+os.environ['fileroot'] = "false"
+
 try:
-    dbutils.fs.ls("/FileStore/tables/" + renamed_fileroot)
+    dbutils.fs.ls(clinicaltrial_csv)
 except:
     dbutils.fs.cp("/FileStore/tables/" + fileroot + ".gz", "file:/tmp/")
     os.environ['fileroot'] = fileroot
@@ -35,35 +44,33 @@ except:
 
 # COMMAND ----------
 
-try:
-    dbutils.fs.ls("file:/tmp/" + fileroot)
-    dbutils.fs.mv("file:/tmp/" + fileroot, "/FileStore/tables/" + renamed_fileroot, True)
-except:
-    pass
-
-# COMMAND ----------
-
-clinical_csv = "/FileStore/tables/" + renamed_fileroot
-mesh_csv = "/FileStore/tables/mesh.csv"
-pharma_csv = "/FileStore/tables/pharma.csv"
+# DO NOT CHANGE THE CONTENT OF THIS CELL
+if 'dbruntime.dbutils' in sys.modules.keys():
+    try:
+        dbutils.fs.ls(clinicaltrial_csv)
+    except:
+        dbutils.fs.cp("file:/tmp/" + fileroot, clinicaltrial_csv)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC NOT SURE YET
+# MAGIC MESH AND PHARMA DATA
 
 # COMMAND ----------
 
-dbutils.fs.ls("/FileStore/tables/")
+# DO NOT CHANGE THE CONTENT OF THIS CELL
+# THE MESH AND PHARMA FILES GET REMOVED AFTER THE DATA IS LOADED, THIS WOULD HELP FIX THE ISSUE, BY COPYING THE FILE TO ANOTHER LOCATION
+mesh_csv = "mesh.csv"
+pharma_csv = "pharma.csv"
+
+if 'dbruntime.dbutils' in sys.modules.keys():
+    try:
+        dbutils.fs.ls("/FileStore/" + mesh_csv)
+        dbutils.fs.ls("/FileStore/" + pharma_csv)
+    except:
+        dbutils.fs.cp("/FileStore/tables/" + mesh_csv, "/FileStore/" + mesh_csv)
+        dbutils.fs.cp("/FileStore/tables/" + pharma_csv, "/FileStore/" + pharma_csv)
 
 # COMMAND ----------
 
-clinicalDF = spark.read.option("header","true").option("inferSchema", "true").option("delimiter", '|').csv(clinical_csv)
-meshDF = spark.read.option("header","true").option("inferSchema", "true").csv(mesh_csv)
-pharmaDF = spark.read.option("header","true").option("inferSchema", "true").csv(pharma_csv)
 
-# COMMAND ----------
-
-clinicalDF.createOrReplaceTempView("clinicaltrial_view")
-meshDF.createOrReplaceTempView("mesh_view")
-pharmaDF.createOrReplaceTempView("pharma_view")
