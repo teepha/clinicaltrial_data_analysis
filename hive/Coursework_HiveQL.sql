@@ -1,52 +1,67 @@
 -- Databricks notebook source
 -- MAGIC %md
--- MAGIC <b>LOADING THE DATA<b>
+-- MAGIC <b>DATA CLEANING AND PREPARATION<b>
 
 -- COMMAND ----------
 
--- CHANGE CLINICALTRIAL YEAR
-SET hivevar:year='2021';
+-- MAGIC %run ./Scripts
 
 -- COMMAND ----------
 
--- MAGIC %python
--- MAGIC # CHANGE CLINICAL TRIAL FILE NAME HERE!!
--- MAGIC import os
--- MAGIC import sys
--- MAGIC 
--- MAGIC fileroot = "clinicaltrial_2021_csv"
--- MAGIC renamed_fileroot = "clinicaltrial_2021.csv"
--- MAGIC 
--- MAGIC try:
--- MAGIC     dbutils.fs.ls("/FileStore/tables/" + renamed_fileroot)
--- MAGIC except:
--- MAGIC     dbutils.fs.cp("/FileStore/tables/" + fileroot + ".gz", "file:/tmp/")
--- MAGIC     os.environ['fileroot'] = fileroot
+-- CHANGE CLINICALTRIAL YEAR  
+-- PLEASE ENSURE THAT THE YEAR MATCHES THE YEAR SPECIFIED IN THE SCRIPTS NOTEBOOK
+SET hivevar:year=2021;
 
 -- COMMAND ----------
 
--- MAGIC %sh
--- MAGIC gunzip /tmp/ /tmp/$fileroot.gz
-
--- COMMAND ----------
-
--- MAGIC %python
--- MAGIC try:
--- MAGIC     dbutils.fs.ls("file:/tmp/" + fileroot)
--- MAGIC     dbutils.fs.mv("file:/tmp/" + fileroot, "/FileStore/tables/" + renamed_fileroot, True)
--- MAGIC except:
--- MAGIC     pass
+-- VARIABLE FOR CLINICAL TRIAL FILE
+SET hivevar:clinicaltrialdata='/FileStore/tables/clinicaltrial_${hivevar:year}.csv';
 
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC <b>CREATE TABLES AND LOAD DATA INTO EACH ONE<b>
+-- MAGIC REMOVING THE EXISTING TABLES AND VIEWS
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC clinicaltrial_tables = "/FileStore/clinicaltrials/"
+-- MAGIC 
+-- MAGIC try:
+-- MAGIC     if len(dbutils.fs.ls(clinicaltrial_tables)) > 0:
+-- MAGIC         dbutils.fs.rm(clinicaltrial_tables, True)
+-- MAGIC     dbutils.fs.rm('dbfs:/user/hive/warehouse/pharma_formatted_table/', True)
+-- MAGIC     dbutils.fs.rm('dbfs:/user/hive/warehouse/mesh/', True)
+-- MAGIC except:
+-- MAGIC     print("There's nothing to see here!")
+
+-- COMMAND ----------
+
+DROP TABLE IF EXISTS clinicaltrial_${hivevar:year}_table;
+DROP VIEW IF EXISTS clinicaltrial_${hivevar:year}_view;
+DROP VIEW IF EXISTS explodedclinical_view;
+DROP VIEW IF EXISTS completedstudies_view;
+
+-- COMMAND ----------
+
+DROP TABLE IF EXISTS mesh_table;
+DROP VIEW IF EXISTS mesh_view;
+
+-- COMMAND ----------
+
+DROP TABLE IF EXISTS pharma_table;
+DROP TABLE IF EXISTS pharma_formatted_table;
+DROP VIEW IF EXISTS pharma_view;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC CREATING TABLES AND LOADING DATA INTO EACH ONE
 
 -- COMMAND ----------
 
 -- CREATE CLINICALTRIAL TABLE
--- CHANGE TABLE NAME TO INCLLUDE YEAR OF CLINICALTRIAL
-CREATE TABLE IF NOT EXISTS clinicaltrial_2021_table(
+CREATE TABLE IF NOT EXISTS clinicaltrial_${hivevar:year}_table(
   Id STRING,
   Sponsor STRING,
   Status STRING,
@@ -62,8 +77,8 @@ LOCATION '/FileStore/clinicaltrials';
 
 -- COMMAND ----------
 
--- CHANGE CLINICALTRIAL FILE NAME AND TABLE NAME HERE!!
-LOAD DATA INPATH '/FileStore/tables/clinicaltrial_2021.csv' INTO TABLE clinicaltrial_2021_table;
+-- LOAD DATA INTO CLINICALTRIAL TABLE
+LOAD DATA INPATH ${hivevar:clinicaltrialdata} OVERWRITE INTO TABLE clinicaltrial_${hivevar:year}_table;
 
 -- COMMAND ----------
 
@@ -78,7 +93,7 @@ LOCATION '/FileStore/mesh';
 -- COMMAND ----------
 
 -- LOAD DATA INTO MESH TABLE
-LOAD DATA INPATH '/FileStore/tables/mesh.csv' INTO TABLE mesh_table;
+LOAD DATA INPATH '/FileStore/mesh.csv' OVERWRITE INTO TABLE mesh_table;
 
 -- COMMAND ----------
 
@@ -102,7 +117,7 @@ LOCATION '/FileStore/pharma';
 -- COMMAND ----------
 
 -- LOAD DATA INTO PHARMA TABLE
-LOAD DATA INPATH '/FileStore/tables/pharma.csv' INTO TABLE pharma_table;
+LOAD DATA INPATH '/FileStore/pharma.csv' OVERWRITE INTO TABLE pharma_table;
 
 -- COMMAND ----------
 
@@ -114,14 +129,13 @@ FROM pharma_table;
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC <b>PREPARING THE DATA<b>
+-- MAGIC CREATING VIEWS FROM TABLES
 
 -- COMMAND ----------
 
 -- CREATE A TEMPORARY VIEW FROM CLINICALTRIAL TABLE
--- CHANGE CLINICALTRIAL TABLE NAME HERE!!
-CREATE TEMPORARY VIEW clinicaltrial_2021_view
-AS SELECT * FROM clinicaltrial_2021_table WHERE Id!='Id';
+CREATE TEMPORARY VIEW clinicaltrial_${hivevar:year}_view
+AS SELECT * FROM clinicaltrial_${hivevar:year}_table WHERE Id!='Id';
 
 -- COMMAND ----------
 
@@ -142,33 +156,45 @@ AS SELECT * FROM pharma_formatted_table WHERE Company!='Company';
 
 -- COMMAND ----------
 
--- QUESTION1: The number of studies in the dataset
-SELECT DISTINCT COUNT(*) AS Count FROM clinicaltrial_2021_view;
+-- Total number of studies in the clinical trial dataset
+SELECT COUNT(*) AS Count FROM clinicaltrial_${hivevar:year}_view;
 
 -- COMMAND ----------
 
--- QUESTION2: List all the Type of studies in the dataset along with the frequencies of each type
-SELECT DISTINCT Type,COUNT(*) AS Count FROM clinicaltrial_2021_view GROUP BY Type ORDER BY Count DESC;
+-- QUESTION1: The number of distinct studies in the clinical trial dataset
+SELECT DISTINCT COUNT(*) AS Count FROM clinicaltrial_${hivevar:year}_view;
+
+-- COMMAND ----------
+
+-- QUESTION2: All the Type of studies in the dataset along with the frequencies of each one
+SELECT Type,COUNT(*) AS Count FROM clinicaltrial_${hivevar:year}_view GROUP BY Type ORDER BY Count DESC;
 
 -- COMMAND ----------
 
 -- QUESTION3: The top 5 Conditions with their frequencies
 SELECT Conditions,COUNT(Conditions) AS Counts
-FROM (SELECT explode(split(Conditions, ',')) AS Conditions FROM clinicaltrial_2021_view WHERE Conditions!='')
+FROM (
+  SELECT explode(split(Conditions, ',')) 
+  AS Conditions 
+  FROM clinicaltrial_${hivevar:year}_view 
+  WHERE Conditions!=''
+  )
 GROUP BY Conditions ORDER BY Counts DESC LIMIT 5;
 
 -- COMMAND ----------
 
 -- CREATE A TEMPORARY VIEW FROM THE EXPLODED CLINICALTRIAL DATA
 CREATE TEMPORARY VIEW explodedclinical_view
-AS SELECT *,explode(split(Conditions, ',')) AS ExplodedConditions FROM clinicaltrial_2021_view WHERE Conditions!='';
+AS 
+SELECT *,explode(split(Conditions, ',')) AS ExplodedConditions 
+FROM clinicaltrial_${hivevar:year}_view WHERE Conditions!='';
 
 -- COMMAND ----------
 
 -- QUESTION 4: The 5 most frequent roots from the hierarchy codes
 SELECT tree,COUNT(tree) counts FROM
 (
-SELECT SUBSTRING(m.tree,1,3) AS tree FROM mesh_view AS m
+SELECT LEFT(m.tree,3) AS tree FROM mesh_view AS m
 JOIN explodedclinical_view AS e
 ON (m.term=e.ExplodedConditions)
 )
@@ -179,7 +205,7 @@ GROUP BY tree ORDER BY counts DESC LIMIT 5;
 -- QUESTION 5: The 10 most common sponsors that are not pharmaceutical companies with the number of clinical trials they have sponsored
 SELECT Sponsor,COUNT(Sponsor) AS counts FROM
 (
-SELECT * FROM clinicaltrial_2021_view c
+SELECT * FROM clinicaltrial_${hivevar:year}_view c
 LEFT OUTER JOIN pharma_view p
 ON c.Sponsor=p.Parent_Company
 WHERE p.Parent_Company IS NULL AND c.Status <> "Active"
@@ -189,10 +215,11 @@ GROUP BY Sponsor ORDER BY counts DESC LIMIT 10;
 -- COMMAND ----------
 
 -- QUESTION 6: Number of completed studies each month in a given year
-SELECT SUBSTRING(Completion,1,3) AS Completion,
+-- LEFT(m.tree,3)
+SELECT LEFT(Completion,3) AS Completion,
        COUNT(Completion) AS counts
-FROM clinicaltrial_2021_view
-WHERE Status=="Completed" AND Completion LIKE concat("%",${hivevar:year})
+FROM clinicaltrial_${hivevar:year}_view
+WHERE Status=="Completed" AND Completion LIKE '%${hivevar:year}'
 GROUP BY Completion
 ORDER BY (unix_timestamp(Completion,'MMM'),'MM');
 
@@ -203,13 +230,13 @@ ORDER BY (unix_timestamp(Completion,'MMM'),'MM');
 
 -- COMMAND ----------
 
--- Create a temporary View from exploded clinical trial data
+-- Create a temporary view from exploded clinical trial data
 CREATE TEMP VIEW completedstudies_view
 AS
 
 SELECT SUBSTRING(Completion,1,3) AS Completion,
        COUNT(Completion) AS counts
-FROM clinicaltrial_2021_view
+FROM clinicaltrial_${hivevar:year}_view
 WHERE Status=="Completed" AND Completion LIKE concat("%",${hivevar:year})
 GROUP BY Completion
 ORDER BY (unix_timestamp(Completion,'MMM'),'MM');
