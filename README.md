@@ -29,15 +29,15 @@ Clinical trials are research studies performed on people, aimed at evaluating a 
 ## Datasets and Their Sources
 
 - Clinicaltrial_year
-## 
+<br><br>
 Each row represents an individual clinical trial, identified by an Id, listing the sponsor (Sponsor), the status of the study at time of the file’s download (Status), the start and completion dates (Start and Completion respectively), the type of study (Type), when the trial was first submitted (Submission), and the lists of conditions the trial concerns (Conditions) and the interventions explored (Interventions). Individual conditions and interventions are separated by commas. (Source: [ClinicalTrials.gov](https://clinicaltrials.gov/))
 
 - Mesh
-##
+<br><br>
 The conditions from the clinical trial list may also appear in a number of hierarchies. The hierarchy identifiers have the format [A-Z][0-9]+(.[0-9]+)* (such as, e.g., D03.633.100.221.173) where the initial letter and number combination designates the root of this particular hierarchy (in the example, this is D03) and each “.” descends a level down the hierarchy. The rows of this file contain condition (term), hierarchy identifier (tree) pairs. (Source: [U.S. National Library of Medicine](https://www.nlm.nih.gov/))
 
 - Pharma
-##
+<br><br>
 The file contains a small number of a publicly available list of pharmaceutical violations. For the puposes of this work, we are interested in the second column, Parent Company, which con- tains the name of the pharmaceutical company in question. (Source: [Pharma data](https://violationtracker.goodjobsfirst.org/industry/pharmaceuticals))
 
 
@@ -50,7 +50,7 @@ The file contains a small number of a publicly available list of pharmaceutical 
 
 
 ## Analysis Performed
-### Problem statements
+#### <b>Problem statements</b>
 You are a data analyst / data scientist whose client wishes to gain further insight into clinical trials. You are tasked with answering these questions, using visualisations where these would support your conclusions.
 
 - The number of studies in the dataset (distinct studies).
@@ -76,10 +76,10 @@ You are a data analyst / data scientist whose client wishes to gain further insi
 ## How To Run This Project
 
 For this project, the platform used is Databricks. 
-##
+<br>
 All the processing was done via executable Notebooks, Scripts and Code. Terminal commands were stored in shell scripts, language specific code was stored in separate files (for example, HiveQL code were stored in .sql scripts).
 The solution was implemented using HiveQL and PySpark's RDD(Resilient Distributed Dataset) and DataFrames. 
-##
+<br>
 Note that the PySpark implementation did not use SQL queries directly.
 
 ```bash
