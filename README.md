@@ -94,12 +94,15 @@ $ git clone https://github.com/teepha/clinicaltrial_data_analysis.git
 # Sign up on Databricks
 • https://community.cloud.databricks.com/
 
-# Upload the datasets(csv files) on the Databricks platform. The uploaded datasets, if used, must exist (and be named) in the following locations: 
+# Upload the datasets(csv files) on the Databricks platform.
+# The uploaded datasets, if used, must exist (and be named) in the following locations: 
 • /FileStore/tables/clinicaltrial_2021.csv (similarly for 2019 and 2020 datasets)
 • /FileStore/tables/mesh.csv
 • /FileStore/tables/pharma.csv
 
-#On Databricks, import the `.ipynb` files from the cloned repository as Notebooks. Open each of the Notebook and click on <Run All>. This will run all the cells in the Notebook and give the result for the analysis.
+# On Databricks, import the `.ipynb` files from the cloned repository as Notebooks.
+# Open each of the Notebook and click on <Run All>. This will run all the cells in 
+# the Notebook and give the result for the analysis.
 • Run All
 ```
 
