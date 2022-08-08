@@ -30,7 +30,7 @@ Clinical trials are research studies performed on people, aimed at evaluating a 
 
 - Clinicaltrial_year
 <br><br>
-Each row represents an individual clinical trial, identified by an Id, listing the sponsor (Sponsor), the status of the study at time of the file’s download (Status), the start and completion dates (Start and Completion respectively), the type of study (Type), when the trial was first submitted (Submission), and the lists of conditions the trial concerns (Conditions) and the interventions explored (Interventions). Individual conditions and interventions are separated by commas. (Source: [ClinicalTrials.gov](https://clinicaltrials.gov/))
+Each row represents an individual clinical trial, identified by an Id, listing the sponsor (Sponsor), the status of the study at time of the file’s download (Status), the start and completion dates (Start and Completion respectively), the type of study (Type), when the trial was first submitted (Submission), and the lists of conditions the trial concerns (Conditions) and the interventions explored (Interventions). Individual conditions and interventions are separated by commas. Download the datasets for years 2019, 2020 and 2021. (Source: [ClinicalTrials.gov](https://clinicaltrials.gov/))
 
 - Mesh
 <br><br>
