@@ -76,10 +76,10 @@ You are a data analyst / data scientist whose client wishes to gain further insi
 ## How To Run This Project
 
 For this project, the platform used is Databricks. 
-<br>
+<br><br>
 All the processing was done via executable Notebooks, Scripts and Code. Terminal commands were stored in shell scripts, language specific code was stored in separate files (for example, HiveQL code were stored in .sql scripts).
 The solution was implemented using HiveQL and PySpark's RDD(Resilient Distributed Dataset) and DataFrames. 
-<br>
+<br><br>
 Note that the PySpark implementation did not use SQL queries directly.
 
 ```bash
